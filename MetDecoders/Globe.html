@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.81/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.81/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/4.0.0/satellite.js"></script>
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+  <div id="loading">
+    <h1>Loading...</h1>
+  </div>
+  <div id="cesiumContainer"></div>
+  <div id="toolbar"></div>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script>
+    // Initialize the Cesium viewer.
+
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+      imageryProvider: new Cesium.TileMapServiceImageryProvider({
+        url: Cesium.buildModuleUrl("Assets/Textures/NaturalEarthII"),
+      }),
+      baseLayerPicker: false, geocoder: false, homeButton: false, infoBox: true,
+      navigationHelpButton: false, sceneModePicker: false
+    });
+
+
+
+    // This causes a bug on android, see: https://github.com/CesiumGS/cesium/issues/7871
+    // viewer.scene.globe.enableLighting = true;
+    // These 2 lines are published by NORAD and allow us to predict where
+    // the ISS is at any given moment. They are regularly updated.
+    // Get the latest from: https://celestrak.com/satcat/tle.php?CATNR=25544. 
+
+    var all = `0 VANGUARD 1
+1 00005U 58002B   21273.19224565  .00000034  00000-0  31140-4 0  9999
+2 00005  34.2531 221.1562 1843374 306.1991  38.1576 10.84820647256275
+0 VANGUARD 2
+1 00011U 59001A   21273.55541742  .00000041  00000-0  24532-4 0  9990
+2 00011  32.8670  90.2030 1467521  25.6142 341.0324 11.85795635330799
+0 VANGUARD R/B
+1 00012U 59001B   21273.36443520  .00000308  00000-0  18924-3 0  9998
+2 00012  32.8961 146.7072 1663324  26.6787 341.0451 11.44391663333816
+0 VANGUARD R/B
+1 00016U 58002A   21273.57700246  .00000180  00000-0  27430-3 0  9996
+2 00016  34.2611 237.2877 2028344  59.9005 318.7230 10.48766432508191
+0 VANGUARD 3
+1 00020U 59007A   21273.45072835  .00000595  00000-0  22982-3 0  9997
+2 00020  33.3541 307.4955 1664426 240.2118 102.2783 11.55835873284994
+0 EXPLORER 7
+1 00022U 59009A   21273.54123688  .00001185  00000-0  10944-3 0  9995
+2 00022  50.2852  55.4841 0138096 255.4912 103.0682 14.95713165540719
+0 TIROS 1
+1 00029U 60002B   21273.37923236  .00000015  00000-0  33271-4 0  9995
+2 00029  48.3787 250.7315 0023390  82.7734 277.5835 14.74457052287880
+0 TRANSIT 2A
+1 00045U 60007A   21273.55279254  .00000109  00000-0  53771-4 0  9993
+2 00045  66.6941 222.0369 0258788 331.9654  26.7703 14.33738198133229
+0 SOLRAD 1 (GREB)
+1    46U 60007B   21273.87571322  .00000087  00000-0  40456-4 0  9991
+2    46  66.6903 215.2726 0205468 142.2048 219.3696 14.49441220207278
+0 THOR ABLESTAR R/B
+1 00047U 60007C   21273.55798210  .00000053  00000-0  36521-4 0  9995
+2 00047  66.6671 337.9444 0232428 317.8842  40.4599 14.42174027202460
+0 DELTA 1 R/B
+1 00050U 60009B   21272.86187099 -.00000097  00000-0 -11818-3 0  9992
+2 00050  47.2303 104.3804 0113488 284.7154  74.1081 12.20116623727531
+0 ECHO 1 DEB (METAL OBJ)
+1 00051U 60009C   21273.24629734 -.00000145  00000-0 -57327-3 0  9992
+2 00051  47.2149 333.9992 0106412 120.7856 240.3458 12.18273330721361
+0 ECHO 1 DEB (METAL OBJ)
+1 00053U 60009E   21273.18347062 -.00000051  00000-0  34303-3 0  9992
+2 00053  47.2748 250.4067 0098601  28.1033 332.5032 12.17261322725781
+0 COURIER 1B
+1 00058U 60013A   21273.60783339  .00000095  00000-0  18341-4 0  9992
+2 00058  28.3267 229.4084 0164926   1.7575 358.3527 13.46328409  2011
+0 THOR ABLESTAR R/B
+1 00059U 60013B   21273.54487792  .00000128  00000-0  49658-4 0  9992
+2 00059  28.2507 323.4347 0189098 271.8557  86.0341 13.52987739  9955
+0 SCOUT X-1 R/B
+1 00082U 61004B   21273.34407990 -.00000075  00000-0 -30823-4 0  9996
+2 00082  38.8573 258.4383 1175802 191.3992 165.7708 12.26019419865487
+0 SCOUT X-1 DEB
+1 00085U 61004C   21273.33097070  .00004178  00000-0  91454-3 0  9994
+2 00085  38.7616 141.0526 0377396  34.3756 328.0808 14.22184272997971
+0 EXPLORER 11
+1 00107U 61013A   21273.46530990  .00000799  00000-0  89918-4 0  9994
+2 00107  28.7876  46.3030 0545452  79.3297 286.8195 14.09302856 32581
+0 THOR ABLE DEB (YO)
+1 00115U 60002D   21273.44781641  .00000363  00000-0  69793-4 0  9995
+2 00115  48.1662 173.7982 0034091 161.4657 198.7505 14.83844873261600
+0 TRANSIT 4A
+1 00116U 61015A   21273.36770053 -.00000043  00000-0  26245-4 0  9998
+2 00116  66.8088 139.4393 0071380  35.4882 325.0915 13.91798080 57190
+0 SOLRAD 3/INJUN 1
+1 00117U 61015B   21273.36191955 -.00000030  00000-0  36833-4 0  9997
+2 00117  66.8114 239.0909 0071783  58.7219 302.0863 13.89871459 54890
+0 THOR ABLESTAR R/B
+1   118U 61015C   21273.78691971  .00000012  00000-0  58536-4 0  9990
+2   118  66.7663  28.0715 0077985  39.5190 321.1545 14.01729010 75460
+0 THOR ABLESTAR DEB
+1 00119U 61015D   21273.44966544  .00000169  00000-0  10574-3 0  9997
+2 00119  66.7288 169.0295 0098934  63.7108 297.4110 14.23430815113134
+0 THOR ABLESTAR DEB
+1 00120U 61015E   21273.28230113  .00000143  00000-0  89406-4 0  9990
+2 00120  66.7057 233.0297 0116671 171.0355 189.2863 14.25558558102734
+0 THOR ABLESTAR DEB
+1   121U 61015F   21273.86235722 -.00000046  00000-0  21783-4 0  9993
+2   121  66.7501 355.9563 0088090 129.2785 231.6155 13.99717477 85557
+0 THOR ABLESTAR DEB
+1 00122U 61015G   21273.57680675  .00001046  00000-0  18785-3 0  9990
+2 00122  66.7525  19.0794 0066802 134.2313 226.4318 14.69702958139478
+0 THOR ABLESTAR DEB
+1 00123U 61015H   21273.54570539  .00000167  00000-0  80993-4 0  9999
+2 00123  66.6856 319.4801 0108260  88.8164 272.5338 14.37211129131942
+0 THOR ABLESTAR DEB
+1   124U 61015J   21273.84348583  .00000260  00000-0  12769-3 0  9994
+2   124  66.5423 114.5084 0083239 247.3225 111.9056 14.30708787112910
+0 THOR ABLESTAR DEB
+1 00125U 61015K   21273.36194018  .00000119  00000-0  11807-3 0  9999
+2 00125  66.8747 269.2232 0081636 245.2333 114.0244 14.05630697 75256
+0 THOR ABLESTAR DEB
+1 00126U 61015L   21273.51266698  .00000333  00000-0  13980-3 0  9993
+2 00126  66.7142 346.5881 0060566  85.5755 275.2262 14.36506019116852
+0 THOR ABLESTAR DEB
+1 00127U 61015M   21273.52209920  .00000364  00000-0  14124-3 0  9995
+2 00127  66.8310 198.7731 0079786 247.5055 111.7588 14.39064364118581
+0 THOR ABLESTAR DEB
+1 00128U 61015N   21273.32256988 -.00000012  00000-0  43321-4 0  9993
+2 00128  66.6751 160.1077 0088193  56.1560 304.7878 14.01232793 73917
+0 THOR ABLESTAR DEB
+1 00130U 61015Q   21273.47963964 -.00000033  00000-0  30943-4 0  9990
+2 00130  66.7715 196.5896 0080023  54.7933 306.0608 13.98746954 70754
+0 THOR ABLESTAR DEB
+1 00131U 61015R   21273.56657521  .00000012  00000-0  59277-4 0  9997
+2 00131  66.7348  69.7130 0083168 193.4710 166.4155 14.00747231 62407
+0 THOR ABLESTAR DEB
+1 00132U 61015S   21273.49303246 -.00000022  00000-0  41490-4 0  9992
+2 00132  66.6585 263.5900 0082263 270.3014  88.8639 13.94345715 63741
+0 THOR ABLESTAR DEB
+1 00133U 61015T   21273.34801521  .00000509  00000-0  28153-3 0  9995
+2 00133  67.1146 255.8909 0048267  69.9806 290.6477 14.18409738 89093
+0 THOR ABLESTAR DEB
+1 00134U 61015U   21273.54201301 -.00000001  00000-0  53376-4 0  9992
+2 00134  66.8809 319.8375 0082908 347.9134  11.9956 13.96877063 65317
+0 THOR ABLESTAR DEB
+1 00136U 61015W   21273.52070048  .00000442  00000-0  18352-3 0  9996
+2 00136  67.5322   1.9856 0056251 165.8551 194.4148 14.33886023109487
+0 THOR ABLESTAR DEB
+1   138U 61015Y   21273.65693970  .00000179  00000-0  16721-3 0  9992
+2   138  67.1574   7.6507 0027980  18.6824 341.5283 14.01870905 61899
+0 THOR ABLESTAR DEB
+1 00141U 61015AB  21273.46752027  .00000203  00000-0  23747-3 0  9998
+2 00141  66.5886 300.7595 0047904  92.7985 267.8575 13.86999584 33031
+0 THOR ABLESTAR DEB
+1 00144U 61015AE  21273.54972133  .00000055  00000-0  10767-3 0  9995
+2 00144  66.5006 320.5557 0039873   7.9170 352.2526 13.90177304 45363
+0 THOR ABLESTAR DEB
+1 00145U 61015AF  21273.58916170  .00000143  00000-0  14418-3 0  9994
+2 00145  66.9273 322.8251 0058995 128.1056 232.5370 14.01443771 75474
+0 THOR ABLESTAR DEB
+1 00147U 61015AH  21273.32618588  .00000019  00000-0  48133-4 0  9994
+2 00147  66.6178 134.1502 0059031 202.8724 156.9737 14.19308858 89885
+0 THOR ABLESTAR DEB
+1 00148U 61015AJ  21273.41925467  .00000428  00000-0  28685-3 0  9995
+2 00148  65.7748 299.6129 0141776 120.0706 241.4519 14.05974664516714
+0 THOR ABLESTAR DEB
+1 00150U 61015AL  21273.43392800  .00000146  00000-0  20837-3 0  9997
+2 00150  66.2484 179.0107 0063805 181.8004 178.2845 13.81404309870639
+0 THOR ABLESTAR DEB
+1 00152U 61015AN  21273.53906025  .00000144  00000-0  11527-3 0  9994
+2 00152  66.5878  17.1739 0160495 283.8257  74.5018 14.09332402 83440
+0 THOR ABLESTAR DEB
+1 00154U 61015AQ  21273.45088953  .00000132  00000-0  12958-3 0  9994
+2 00154  66.6585 162.8153 0078181 118.5883 242.3097 14.04570300 74847
+0 THOR ABLESTAR DEB
+1 00155U 61015AR  21273.13990964  .00000456  00000-0  17094-3 0  9999
+2 00155  66.8798 163.8066 0045982 163.5238 196.7374 14.39651172112485
+0 THOR ABLESTAR DEB
+1 00158U 61015AU  21273.51474710  .00000033  00000-0  22323-3 0  9992
+2 00158  67.0751 331.8668 0614988 208.7394 147.8414 12.65350930787584
+0 THOR ABLESTAR DEB
+1 00159U 61015AV  21273.51873017  .00000145  00000-0  50423-3 0  9992
+2 00159  65.5249  76.2825 0360197  94.7200 269.5046 13.02146960856740
+0 TIROS 3
+1 00162U 61017A   21273.44207042 -.00000069  00000-0  26800-4 0  9998
+2 00162  47.8990 266.6116 0045582 270.7334  88.8336 14.44097911142986
+0 MIDAS 3
+1 00163U 61018A   21273.45038116 -.00000014  00000-0 -51919-2 0  9993
+2 00163  91.1640 130.9977 0100064 245.6154 113.4248  8.91835364960596
+0 DELTA 1 DEB (YO)
+1 00167U 61017D   21273.41353954  .00000192  00000-0  14563-3 0  9992
+2 00167  47.8468  48.8197 0092119 268.0193  91.0139 14.22811391119546
+0 THOR ABLESTAR DEB
+1 00172U 61015AY  21273.16613736  .00000048  00000-0  15274-3 0  9995
+2 00172  67.0672 142.5152 0138776 207.9913 151.3640 13.57602262971363
+0 THOR ABLESTAR DEB
+1 00177U 61015BB  21273.47386313  .00000291  00000-0  18473-3 0  9996
+2 00177  66.6655 276.1515 0121922 217.5099 141.7438 14.13570977 97860
+0 THOR ABLESTAR DEB
+1 00178U 61015BC  21273.31814518 -.00000010  00000-0  50698-4 0  9999
+2 00178  66.8642 244.5236 0076319 147.1879 213.3975 13.92403926 57617
+0 MIDAS 3 DEB
+1 00188U 61018C   21273.31327383 -.00000009  00000-0 -37102-2 0  9994
+2 00188  91.1575 133.6880 0101903 107.2488 253.9567  8.93800902964454
+0 MIDAS 4
+1 00192U 61028A   21273.32483378  .00000012  00000-0  72641-2 0  9997
+2 00192  95.8427 221.6026 0136969 211.3081 147.9558  8.67762908898892
+0 MIDAS 4 DEB
+1 00194U 61028C   21273.34279824  .00000029  00000-0  13012-1 0  9994
+2 00194  95.8364 244.1281 0396079  79.6519 284.8727  8.70081337903595
+0 MIDAS 4 DEB
+1 00195U 61028D   21272.16355047 -.00000021  00000-0 -77801-2 0  9997
+2 00195  95.8473 203.6899 0132913 305.3063  53.5421  8.65613650894044
+0 MIDAS 3 DEB
+1 00196U 61018D   21270.98751694 -.00000022  00000-0 -85777-2 0  9995
+2 00196  91.1721 129.1321 0115665  24.2436 336.3821  8.89680320955451
+0 TRANSIT 4B
+1 00202U 61031A   21273.46031150  .00000045  00000-0  28514-4 0  9993
+2 00202  32.4390 339.2983 0101002 106.4385 254.7363 13.63553405985978
+0 THOR ABLESTAR R/B
+1 00204U 61031C   21273.44001582  .00000042  00000-0  22127-4 0  9990
+2 00204  32.4432  53.7423 0098556 176.2969 183.8398 13.64887623987779
+0 TRAAC
+1   205U 61031B   21273.71375081  .00000039  00000-0  18040-4 0  9994
+2   205  32.4404 116.4641 0102534 253.6840 105.2483 13.62422300984784
+0 THOR ABLESTAR DEB
+1   210U 61015BE  21273.75491469  .00000217  00000-0  25271-3 0  9996
+2   210  66.4565 280.7889 0052448 306.1709  53.4518 13.86201726 27122
+0 THOR ABLESTAR DEB
+1   223U 61015BK  21273.87247782 -.00000053  00000-0  17978-4 0  9995
+2   223  66.8906 172.6125 0062221 114.1571 246.6029 13.88664097 52391
+0 THOR ABLESTAR DEB
+1 00224U 61015BL  21273.40074253 -.00000011  00000-0  39756-4 0  9998
+2 00224  66.7369 181.3487 0066825 173.4427 300.5075 14.08219565 69932
+0 THOR ABLESTAR DEB
+1 00225U 61015BM  21273.53537827  .00000328  00000-0  14632-3 0  9999
+2 00225  66.7993  83.9725 0103142  66.5049 294.6849 14.31704148110935
+0 TIROS 4
+1 00226U 62002A   21273.27641388 -.00000061  00000-0  30673-4 0  9995
+2 00226  48.2956 230.7369 0078106   8.1715 352.0437 14.45721228119348
+0 DELTA 1 DEB (YO)
+1 00227U 62002B   21272.98478109 -.00000078  00000-0  28055-4 0  9991
+2 00227  48.1466 147.6664 0131655 178.2705 181.8669 14.38334020 96357
+0 DELTA 1 DEB (YO)
+1 00228U 62002C   21273.47890324  .00000913  00000-0  88810-4 0  9996
+2 00228  48.4309 349.0030 0015424 231.7880 128.1655 15.01852925181855
+0 THOR ABLESTAR DEB
+1 00230U 61015BN  21273.56358795 -.00000012  00000-0  45878-4 0  9991
+2 00230  66.8839 315.8200 0096842 329.7883  29.7635 13.96146567 65512
+0 THOR ABLESTAR DEB
+1   232U 61015BQ  21273.86849072 -.00000010  00000-0  46198-4 0  9993
+2   232  66.8205 155.0938 0064490 252.4414 106.9617 13.99359444 66678`;
+
+
+var arr = all.split('\n');
+
+    const totalSeconds = 60 * 60 * 6;
+    const timestepInSeconds = 10;
+    const start = Cesium.JulianDate.fromDate(new Date());
+    const stop = Cesium.JulianDate.addSeconds(start, totalSeconds, new Cesium.JulianDate());
+    viewer.clock.startTime = start.clone();
+    viewer.clock.stopTime = stop.clone();
+    viewer.clock.currentTime = start.clone();
+    viewer.timeline.zoomTo(start, stop);
+    viewer.clock.multiplier = 40;
+    viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+
+for (let i = 0; i < arr.length/3 ; i++) {
+  var c = i * 3;
+  var title = arr[c];
+       console.log(arr[c+2].trim())
+    var satrec = satellite.twoline2satrec(
+      arr[c+1].trim(), 
+      arr[c+2].trim()
+    );
+
+        var positionsOverTime = new Cesium.SampledPositionProperty();
+    for (let i = 0; i < totalSeconds; i+= timestepInSeconds) {
+      var time = Cesium.JulianDate.addSeconds(start, i, new Cesium.JulianDate());
+      var jsDate = Cesium.JulianDate.toDate(time);
+
+      var positionAndVelocity = satellite.propagate(satrec, jsDate);
+      var gmst = satellite.gstime(jsDate);
+      var p   = satellite.eciToGeodetic(positionAndVelocity.position, gmst);
+
+      var position = Cesium.Cartesian3.fromRadians(p.longitude, p.latitude, p.height * 1000);
+   
+      positionsOverTime.addSample(time, position);
+    }
+  
+    var satellitePoint = viewer.entities.add({
+        name: title.substring(2),
+    //     label : {
+    //     text : title.substring(2),
+    //     font : '10pt monospace',
+    //     style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+    //     outlineWidth : 2,
+    //     verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
+    //     pixelOffset : new Cesium.Cartesian2(0, -9)
+    // },
+   description :
+        'Please refer to the link to read more about '+ title.substring(2) +
+        '<div style="text-align:center; padding:15px"><a href="https://en.wikipedia.org/wiki/'+title.substring(2)+'" targer="_blank">' +
+        'Click here</a>'+'</div>',
+      position: positionsOverTime,
+      point: { pixelSize: 5, color: Cesium.Color.RED },
+        polyline : {
+            positions: [
+                Cesium.Cartesian3.fromDegrees(-86.0, 55.0, positionsOverTime.height),
+                Cesium.Cartesian3.fromDegrees(-86.0, 55.0, positionsOverTime.height)
+            ],
+            width : new Cesium.ConstantProperty(22),
+            material : Cesium.Color.fromRandom({alpha : 1.0}),
+            followSurface : new Cesium.ConstantProperty(false)
+        }
+    });
+
+}
+//console.log(positionsOverTime)
+    // const ISS_TLE = 
+    // `1 25544U 98067A   21121.52590485  .00001448  00000-0  34473-4 0  9997
+    // 2 25544  51.6435 213.5204 0002719 305.2287 173.7124 15.48967392281368`;
+
+
+    //console.log(ISS_TLE.split('\n')[0].trim());
+    // const satrec = satellite.twoline2satrec(
+    //   ISS_TLE.split('\n')[0].trim(), 
+    //   ISS_TLE.split('\n')[1].trim()
+    // );
+
+
+ 
+    // Give SatelliteJS the TLE's and a specific time.
+    // Get back a longitude, latitude, height (km).
+    // We're going to generate a position every 10 seconds from now until 6 seconds from now. 
+
+    // CAUTION: Only disable iframe sandbox if the descriptions come from a trusted source.
+// viewer.infoBox.frame.setAttribute('sandbox', 'allow-same-origin allow-popups allow-forms allow-scripts allow-top-navigation');
+
+// function updateDisplay() {
+//     toolbar.innerHTML = 'Number of times you clicked either button: ';
+// }
+// updateDisplay();
+
+
+
+
+    // const positionsOverTime2 = new Cesium.SampledPositionProperty();
+    // for (let i = 0; i < totalSeconds; i+= timestepInSeconds) {
+    //   const time = Cesium.JulianDate.addSeconds(start, i, new Cesium.JulianDate());
+    //   const jsDate = Cesium.JulianDate.toDate(time);
+
+    //   const positionAndVelocity2 = satellite.propagate(satrec2, jsDate);
+    //   const gmst = satellite.gstime(jsDate);
+    //   const p   = satellite.eciToGeodetic(positionAndVelocity2.position, gmst);
+
+    //   const position = Cesium.Cartesian3.fromRadians(p.longitude, p.latitude, p.height * 1000);
+    //   positionsOverTime2.addSample(time, position);
+    // }  
+    // Visualize the satellite with a red dot.
+
+    // Visualize the satellite with a red dot.
+  
+    // Set the camera to follow the satellite 
+//    viewer.trackedEntity = satellitePoint;
+    // Wait for globe to load then zoom out     
+    let initialized = false;
+    viewer.scene.globe.tileLoadProgressEvent.addEventListener(() => {
+      if (!initialized && viewer.scene.globe.tilesLoaded === true) {
+        viewer.clock.shouldAnimate = true;
+        initialized = true;
+        viewer.scene.camera.zoomOut(2000000);
+        document.querySelector("#loading").classList.toggle('disappear', true)
+      }
+    });
+
+    viewer.selectedEntityChanged.addEventListener(function(selectedEntity) {
+  if (Cesium.defined(selectedEntity)) {
+      if (Cesium.defined(selectedEntity.name)) {
+        console.log('Selected ' + selectedEntity.description);
+        // select the target element
+        $(".cesium-infoBox-iframe").remove();
+        $('<div class="cesium-infoBox-iframe" sandbox="allow-same-origin allow-popups allow-forms" data-bind="style : { maxHeight : maxHeightOffset(40) }" allowfullscreen="true" src="about:blank" style="max-height: 492px;">'+selectedEntity.description+'</div>').appendTo(".cesium-infoBox")
+
+      } else {
+        console.log('Unknown entity selected.');
+      }
+  } else {
+    console.log('Deselected.');
+  }
+});
+
+    viewer.infoBox.frame.addEventListener('load', function() {
+    //
+    // Now that the description is loaded, register a click listener inside
+    // the document of the iframe.
+    //
+    console.log("loaded?")
+    viewer.infoBox.frame.contentDocument.body.addEventListener('click', function(e) {
+        //
+        // The document body will be rewritten when the selectedEntity changes,
+        // but this body listener will survive.  Now it must determine if it was
+        // one of the clickable buttons.
+        //
+
+        if (e.target && e.target.className === 'click-test-button') {
+            ++numClicks;
+            updateDisplay();
+        }
+    }, false);
+}, false);
+
+  </script>
+</body>
+</html>
